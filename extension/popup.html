@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGNI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 400px;
+      min-height: 500px;
+      background: linear-gradient(135deg, #1a0505 0%, #0a0a0a 100%);
+      color: #ffffff;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(220, 38, 38, 0.3);
+    }
+
+    .icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #dc2626, #f97316);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .title {
+      flex: 1;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #dc2626, #f97316);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .actions {
+      display: grid;
+      gap: 12px;
+    }
+
+    .action-btn {
+      padding: 16px;
+      background: rgba(220, 38, 38, 0.1);
+      border: 1px solid rgba(220, 38, 38, 0.3);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+    }
+
+    .action-btn:hover {
+      background: rgba(220, 38, 38, 0.2);
+      border-color: rgba(220, 38, 38, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .action-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(220, 38, 38, 0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .action-content h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .action-content p {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .settings {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(220, 38, 38, 0.3);
+    }
+
+    .setting-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .toggle {
+      width: 44px;
+      height: 24px;
+      background: #444;
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle.active {
+      background: linear-gradient(135deg, #dc2626, #f97316);
+    }
+
+    .toggle-slider {
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s;
+    }
+
+    .toggle.active .toggle-slider {
+      transform: translateX(20px);
+    }
+
+    .footer {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(220, 38, 38, 0.3);
+      text-align: center;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .shortcut {
+      display: inline-block;
+      background: rgba(220, 38, 38, 0.2);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      margin: 0 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="icon">🔥</div>
+      <div class="title">
+        <h1>AGNI</h1>
+        <div class="subtitle">AI Assistant v1.0</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="action-btn" onclick="openFeature('chat')">
+        <div class="action-icon">💬</div>
+        <div class="action-content">
+          <h3>Quick Chat</h3>
+          <p>Ask anything, get instant answers</p>
+        </div>
+      </div>
+
+      <div class="action-btn" onclick="openFeature('code')">
+        <div class="action-icon">💻</div>
+        <div class="action-content">
+          <h3>Code Assistant</h3>
+          <p>Debug, format, and explain code</p>
+        </div>
+      </div>
+
+      <div class="action-btn" onclick="openFeature('tasks')">
+        <div class="action-icon">✅</div>
+        <div class="action-content">
+          <h3>Task Manager</h3>
+          <p>Track tasks and set reminders</p>
+        </div>
+      </div>
+
+      <div class="action-btn" onclick="openFeature('research')">
+        <div class="action-icon">🔍</div>
+        <div class="action-content">
+          <h3>Research Mode</h3>
+          <p>Find and summarize information</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings">
+      <div class="setting-item">
+        <span>Enable AGNI on all sites</span>
+        <div class="toggle active" onclick="toggleSetting(this, 'enabled')">
+          <div class="toggle-slider"></div>
+        </div>
+      </div>
+      <div class="setting-item">
+        <span>Auto-speak responses</span>
+        <div class="toggle" onclick="toggleSetting(this, 'autoSpeak')">
+          <div class="toggle-slider"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Press <span class="shortcut">Alt+A</span> to toggle AGNI on any page
+    </div>
+  </div>
+
+  <script>
+    function openFeature(feature) {
+      chrome.tabs.create({
+        url: `https://1c35f29f-4dc3-4eb7-8f05-24a696e11de7.lovableproject.com?feature=${feature}`
+      });
+    }
+
+    function toggleSetting(element, setting) {
+      element.classList.toggle('active');
+      const enabled = element.classList.contains('active');
+      
+      chrome.storage.sync.set({ [setting]: enabled }, () => {
+        console.log(`${setting} set to ${enabled}`);
+      });
+    }
+
+    // Load settings on popup open
+    document.addEventListener('DOMContentLoaded', () => {
+      chrome.storage.sync.get(['enabled', 'autoSpeak'], (settings) => {
+        if (settings.enabled) {
+          document.querySelectorAll('.toggle')[0].classList.add('active');
+        }
+        if (settings.autoSpeak) {
+          document.querySelectorAll('.toggle')[1].classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

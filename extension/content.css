@@ -1,0 +1,15 @@
+/* AGNI Extension Content Styles */
+
+#agni-extension-root {
+  all: initial;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+#agni-iframe {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Prevent AGNI from interfering with page content */
+#agni-extension-root * {
+  box-sizing: border-box;
+}

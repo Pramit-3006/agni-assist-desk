@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { X, MessageSquare, Code2, ListTodo, BookOpen } from "lucide-react";
+import { X, MessageSquare, Code2, ListTodo, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChatInterface } from "./ChatInterface";
-import { CodeAssistant } from "./CodeAssistant";
+import { EnhancedCodeAssistant } from "./EnhancedCodeAssistant";
 import { TaskManager } from "./TaskManager";
+import { ResearchMode } from "./ResearchMode";
 import { cn } from "@/lib/utils";
 
 interface AgniPanelProps {
@@ -71,6 +72,16 @@ export const AgniPanel = ({ onClose }: AgniPanelProps) => {
               <ListTodo className="h-4 w-4 mr-2" />
               Tasks
             </TabsTrigger>
+            <TabsTrigger
+              value="research"
+              className={cn(
+                "rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-3",
+                "hover:bg-muted/50"
+              )}
+            >
+              <Search className="h-4 w-4 mr-2" />
+              Research
+            </TabsTrigger>
           </TabsList>
 
           <div className="flex-1 overflow-hidden">
@@ -78,10 +89,13 @@ export const AgniPanel = ({ onClose }: AgniPanelProps) => {
               <ChatInterface />
             </TabsContent>
             <TabsContent value="code" className="h-full mt-0">
-              <CodeAssistant />
+              <EnhancedCodeAssistant />
             </TabsContent>
             <TabsContent value="tasks" className="h-full mt-0">
               <TaskManager />
+            </TabsContent>
+            <TabsContent value="research" className="h-full mt-0">
+              <ResearchMode />
             </TabsContent>
           </div>
         </Tabs>
