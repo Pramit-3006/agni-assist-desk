@@ -1,19 +1,24 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Check } from "lucide-react";
+import { Plus, Trash2, Check, Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useToast } from "@/hooks/use-toast";
 
 interface Task {
   id: string;
   text: string;
   completed: boolean;
+  reminder?: number; // timestamp for reminder
 }
 
 export const TaskManager = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState("");
+  const { permission, requestPermission, showNotification, isSupported } = useNotifications();
+  const { toast } = useToast();
 
   // Load tasks from localStorage
   useEffect(() => {
@@ -27,6 +32,29 @@ export const TaskManager = () => {
   useEffect(() => {
     localStorage.setItem("agni-tasks", JSON.stringify(tasks));
   }, [tasks]);
+
+  // Check for task reminders
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      tasks.forEach((task) => {
+        if (task.reminder && task.reminder <= now && !task.completed) {
+          showNotification("Task Reminder", {
+            body: task.text,
+            tag: task.id,
+          });
+          // Clear the reminder after showing
+          setTasks((prevTasks) =>
+            prevTasks.map((t) =>
+              t.id === task.id ? { ...t, reminder: undefined } : t
+            )
+          );
+        }
+      });
+    }, 10000); // Check every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [tasks, showNotification]);
 
   const addTask = () => {
     if (!newTask.trim()) return;
@@ -58,22 +86,67 @@ export const TaskManager = () => {
     }
   };
 
+  const setTaskReminder = (taskId: string, minutes: number) => {
+    if (permission !== "granted") {
+      requestPermission().then((perm) => {
+        if (perm === "granted") {
+          setReminderForTask(taskId, minutes);
+        } else {
+          toast({
+            title: "Permission Denied",
+            description: "Please enable notifications to set reminders",
+            variant: "destructive",
+          });
+        }
+      });
+    } else {
+      setReminderForTask(taskId, minutes);
+    }
+  };
+
+  const setReminderForTask = (taskId: string, minutes: number) => {
+    const reminderTime = Date.now() + minutes * 60 * 1000;
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId ? { ...task, reminder: reminderTime } : task
+      )
+    );
+    toast({
+      title: "Reminder Set",
+      description: `You'll be notified in ${minutes} minute${minutes > 1 ? "s" : ""}`,
+    });
+  };
+
   return (
     <div className="h-full flex flex-col p-4 gap-4">
-      <div className="flex gap-2">
-        <Input
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Add a new task..."
-          className="bg-muted border-border"
-        />
-        <Button
-          onClick={addTask}
-          className="bg-gradient-fire hover:opacity-90"
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <Input
+            value={newTask}
+            onChange={(e) => setNewTask(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Add a new task..."
+            className="bg-muted border-border"
+          />
+          <Button
+            onClick={addTask}
+            className="bg-gradient-fire hover:opacity-90"
+          >
+            <Plus className="h-5 w-5" />
+          </Button>
+        </div>
+        
+        {isSupported && permission !== "granted" && (
+          <Button
+            onClick={requestPermission}
+            variant="outline"
+            size="sm"
+            className="w-full"
+          >
+            <Bell className="h-4 w-4 mr-2" />
+            Enable Notifications for Reminders
+          </Button>
+        )}
       </div>
 
       <ScrollArea className="flex-1">
@@ -93,23 +166,46 @@ export const TaskManager = () => {
                   onCheckedChange={() => toggleTask(task.id)}
                   className="border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
-                <span
-                  className={`flex-1 ${
-                    task.completed
-                      ? "line-through text-muted-foreground"
-                      : "text-foreground"
-                  }`}
-                >
-                  {task.text}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deleteTask(task.id)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20 hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex-1">
+                  <span
+                    className={`${
+                      task.completed
+                        ? "line-through text-muted-foreground"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {task.text}
+                  </span>
+                  {task.reminder && !task.completed && (
+                    <div className="flex items-center gap-1 mt-1 text-xs text-primary">
+                      <Bell className="h-3 w-3" />
+                      Reminder set
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {!task.completed && !task.reminder && isSupported && permission === "granted" && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setTaskReminder(task.id, 5)}
+                        title="Remind in 5 min"
+                      >
+                        <Bell className="h-3 w-3" />
+                      </Button>
+                    </>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:bg-destructive/20 hover:text-destructive"
+                    onClick={() => deleteTask(task.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))
           )}

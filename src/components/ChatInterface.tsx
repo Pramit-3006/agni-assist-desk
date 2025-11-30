@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
+import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 
 interface Message {
   role: "user" | "assistant";
@@ -20,8 +22,27 @@ export const ChatInterface = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  
+  const { 
+    isListening, 
+    transcript, 
+    startListening, 
+    stopListening, 
+    resetTranscript,
+    isSupported: voiceSupported 
+  } = useVoiceRecognition();
+  
+  const { speak, stop: stopSpeaking, isSpeaking } = useTextToSpeech();
+
+  // Update input when voice transcript changes
+  useEffect(() => {
+    if (transcript) {
+      setInput(transcript);
+    }
+  }, [transcript]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -44,10 +65,16 @@ export const ChatInterface = () => {
 
       if (error) throw error;
 
+      const assistantResponse = data.response;
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.response },
+        { role: "assistant", content: assistantResponse },
       ]);
+      
+      // Auto-speak response if enabled
+      if (autoSpeak) {
+        speak(assistantResponse);
+      }
     } catch (error: any) {
       console.error("Chat error:", error);
       toast({
@@ -65,6 +92,22 @@ export const ChatInterface = () => {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const toggleVoiceInput = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      resetTranscript();
+      startListening();
+    }
+  };
+
+  const toggleAutoSpeak = () => {
+    if (autoSpeak && isSpeaking) {
+      stopSpeaking();
+    }
+    setAutoSpeak(!autoSpeak);
   };
 
   return (
@@ -100,15 +143,56 @@ export const ChatInterface = () => {
         </div>
       </ScrollArea>
 
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border space-y-3">
+        <div className="flex gap-2 justify-center">
+          {voiceSupported && (
+            <Button
+              onClick={toggleVoiceInput}
+              variant={isListening ? "default" : "outline"}
+              size="sm"
+              className={isListening ? "bg-primary animate-pulse" : ""}
+            >
+              {isListening ? (
+                <>
+                  <MicOff className="h-4 w-4 mr-2" />
+                  Stop Listening
+                </>
+              ) : (
+                <>
+                  <Mic className="h-4 w-4 mr-2" />
+                  Voice Input
+                </>
+              )}
+            </Button>
+          )}
+          <Button
+            onClick={toggleAutoSpeak}
+            variant={autoSpeak ? "default" : "outline"}
+            size="sm"
+            className={autoSpeak ? "bg-secondary" : ""}
+          >
+            {autoSpeak ? (
+              <>
+                <Volume2 className="h-4 w-4 mr-2" />
+                Auto-Speak On
+              </>
+            ) : (
+              <>
+                <VolumeX className="h-4 w-4 mr-2" />
+                Auto-Speak Off
+              </>
+            )}
+          </Button>
+        </div>
+        
         <div className="flex gap-2">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask me anything..."
+            placeholder="Ask me anything or use voice input..."
             className="min-h-[60px] resize-none bg-muted border-border focus:border-primary"
-            disabled={isLoading}
+            disabled={isLoading || isListening}
           />
           <Button
             onClick={handleSend}
